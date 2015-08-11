@@ -33,7 +33,7 @@ void mycallback(double stamp, std::vector<unsigned char> *message, void *userDat
 {
     int nBytes = message->size();
     if (nBytes > 0) {
-        std::cout << std::setw(5) << stamp << ": ";
+        std::cout << std::setfill(' ') << std::setw(8) << stamp << ": ";
         for (int i = 0; i < nBytes; i++)
             std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)message->at(i) << " ";
 
@@ -43,16 +43,16 @@ void mycallback(double stamp, std::vector<unsigned char> *message, void *userDat
 
             switch (type) {
             case 0x90:
-                std::cout << std::dec << " note on        (channel " << std::setw(2) << channel << "): pitch " << std::setw(3) << (int)message->at(1) << ", velocity " << (int)message->at(2);
+                std::cout << std::dec << " note on        (channel " << std::setw(2) << (int)channel << "): pitch " << std::setw(3) << (int)message->at(1) << ", velocity " << (int)message->at(2);
                 break;
             case 0x80:
-                std::cout << std::dec << " note off       (channel " << std::setw(2) << channel << "): pitch " << std::setw(3) << (int)message->at(1) << ", velocity " << (int)message->at(2);
+                std::cout << std::dec << " note off       (channel " << std::setw(2) << (int)channel << "): pitch " << std::setw(3) << (int)message->at(1) << ", velocity " << (int)message->at(2);
                 break;
             case 0xb0:
-                std::cout << std::dec << " control change (channel " << std::setw(2) << channel << "): controller " << std::setw(3) << (int)message->at(1) << ", value " << (int)message->at(2);
+                std::cout << std::dec << " control change (channel " << std::setw(2) << (int)channel << "): controller " << std::setw(3) << (int)message->at(1) << ", value " << (int)message->at(2);
                 break;
             case 0xe0:
-                std::cout << std::dec << " pitch bender   (channel " << std::setw(2) << channel << "): value " << (int)(((message->at(2) << 7) | message->at(1)) - 8192);
+                std::cout << std::dec << " pitch bender   (channel " << std::setw(2) << (int)channel << "): value " << (int)(((message->at(2) << 7) | message->at(1)) - 8192);
                 break;
             default:
                 break;
@@ -64,7 +64,7 @@ void mycallback(double stamp, std::vector<unsigned char> *message, void *userDat
 
         if (nBytes == 2 && (message->at(0) & 0xf0) == 0xc0) {
             uint8_t channel = message->at(0) & 0xf;
-            std::cout << std::dec << "    program change (channel " << std::setw(2) << channel << "): value " << std::setw(3) << (int)message->at(1);
+            std::cout << std::dec << "    program change (channel " << std::setw(2) << (int)channel << "): value " << std::setw(3) << (int)message->at(1);
         }
 
         std::cout << std::endl;
