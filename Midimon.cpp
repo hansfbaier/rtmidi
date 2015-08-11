@@ -29,6 +29,49 @@ void bye(int retval)
     exit(retval);
 }
 
+void mycallback(double stamp, std::vector<unsigned char> *message, void *userData)
+{
+    int nBytes = message->size();
+    if (nBytes > 0) {
+        std::cout << std::setw(5) << stamp << ": ";
+        for (int i = 0; i < nBytes; i++)
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)message->at(i) << " ";
+
+        if (nBytes == 3) {
+            uint8_t type = message->at(0) & 0xf0;
+            uint8_t channel = message->at(0) & 0xf;
+
+            switch (type) {
+            case 0x90:
+                std::cout << std::dec << " note on        (channel " << std::setw(2) << channel << "): pitch " << std::setw(3) << (int)message->at(1) << ", velocity " << (int)message->at(2);
+                break;
+            case 0x80:
+                std::cout << std::dec << " note off       (channel " << std::setw(2) << channel << "): pitch " << std::setw(3) << (int)message->at(1) << ", velocity " << (int)message->at(2);
+                break;
+            case 0xb0:
+                std::cout << std::dec << " control change (channel " << std::setw(2) << channel << "): controller " << std::setw(3) << (int)message->at(1) << ", value " << (int)message->at(2);
+                break;
+            case 0xe0:
+                std::cout << std::dec << " pitch bender   (channel " << std::setw(2) << channel << "): value " << (int)(((message->at(2) << 7) | message->at(1)) - 8192);
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (nBytes == 1 && message->at(0) == 0xf8)
+            std::cout << " midi clock";
+
+        if (nBytes == 2 && (message->at(0) & 0xf0) == 0xc0) {
+            uint8_t channel = message->at(0) & 0xf;
+            std::cout << std::dec << "    program change (channel " << std::setw(2) << channel << "): value " << std::setw(3) << (int)message->at(1);
+        }
+
+        std::cout << std::endl;
+    }
+}
+
+
 int main(int argc, char* argv[])
 {
     progName = argv[0];
@@ -80,63 +123,18 @@ int main(int argc, char* argv[])
         }
     }
 
-    std::vector<unsigned char> message;
-    int nBytes, i;
-    double stamp;
-
     midiin->openPort(portnum);
+    // Set our callback function.  This should be done immediately after
+    // opening the port to avoid having incoming messages written to the
+    // queue.
+    midiin->setCallback(&mycallback);
     // Don't ignore sysex, timing, or active sensing messages.
     midiin->ignoreTypes(false, false, false);
 
-    // Periodically check input queue.
-    std::cout << "Reading MIDI from port '" << midiin->getPortName(portnum) << "' quit with Ctrl-C.\n";
-    while (true) {
-        stamp = midiin->getMessage(&message);
-        nBytes = message.size();
-        if (nBytes > 0) {
-            std::cout << std::setw(5) << stamp << ": ";
-            for (i = 0; i < nBytes; i++)
-                std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)message[i] << " ";
+    std::cout << "Reading MIDI from port '" << midiin->getPortName(portnum) << "' press any key to quit.\n";
+    char input;
+    std::cin.get(input);
 
-            if (nBytes == 3) {
-                uint8_t type = message[0] & 0xf0;
-                uint8_t channel = message[0] & 0xf;
-
-                switch (type) {
-                case 0x90:
-                    std::cout << std::dec << " note on        (channel " << std::setw(2) << channel << "): pitch " << std::setw(3) << (int)message[1] << ", velocity " << (int)message[2];
-                    break;
-                case 0x80:
-                    std::cout << std::dec << " note off       (channel " << std::setw(2) << channel << "): pitch " << std::setw(3) << (int)message[1] << ", velocity " << (int)message[2];
-                    break;
-                case 0xb0:
-                    std::cout << std::dec << " control change (channel " << std::setw(2) << channel << "): controller " << std::setw(3) << (int)message[1] << ", value " << (int)message[2];
-                    break;
-                case 0xe0:
-                    std::cout << std::dec << " pitch bender   (channel " << std::setw(2) << channel << "): value " << (int)(((message[2] << 7) | message[1]) - 8192);
-                    break;
-                default:
-                    break;
-                }
-            }
-
-            if (nBytes == 1 && message[0] == 0xf8)
-                std::cout << " midi clock";
-
-            if (nBytes == 2 && (message[0] & 0xf0) == 0xc0) {
-                uint8_t channel = message[0] & 0xf;
-                std::cout << std::dec << "    program change (channel " << std::setw(2) << channel << "): value " << std::setw(3) << (int)message[1];
-            }
-
-            std::cout << std::endl;
-        }
-#if defined _WIN32
-        Sleep(1);
-#else
-        sleep(2);
-#endif
-    }
-    
     delete midiin;
     return 0;
 }
