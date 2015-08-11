@@ -1,3 +1,8 @@
+This is a fork of RtMidi,
+whose primary concern is to provide a Midi Monitor application on Windows and Linux.
+This has been done because of a lack of an open source midi monitor on Windows,
+and to provide a quick way to monitor incoming midi without having to start jack.
+
 RtMidi - a set of C++ classes that provide a common API for realtime MIDI input/output across Linux (ALSA & JACK), Macintosh OS X (CoreMidi & JACK) and Windows (Multimedia).
 
 By Gary P. Scavone, 2003-2014.
