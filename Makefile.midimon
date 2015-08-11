@@ -1,0 +1,13 @@
+SRCS=Midimon.cpp RtMidi.cpp
+EXES=midimon midimon.exe
+
+all: $(EXES)
+
+midimon: $(SRCS)
+	g++ -Wall -D__LINUX_ALSA__ -o $@  $^ -lasound -lpthread
+
+midimon.exe: $(SRCS)
+	i586-mingw32msvc-g++ -mno-cygwin -D__WINDOWS_MM__ -Wall -o $@ $^ /usr/i586-mingw32msvc/lib/libwinmm.a
+
+clean:
+	rm $(EXES)
